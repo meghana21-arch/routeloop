@@ -1,7 +1,16 @@
+import os
+
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 app = FastAPI(title="RouteLoop Evaluator", version="0.1.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[os.getenv("WEB_ORIGIN", "https://routeloop-ten.vercel.app")],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
+)
 
 class Evaluation(BaseModel):
     output: str

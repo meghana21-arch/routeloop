@@ -20,3 +20,6 @@ services:
     dockerfilePath: ./evaluator/Dockerfile
     dockerContext: ./evaluator
     healthCheckPath: /healthz
+    envVars:
+      - key: WEB_ORIGIN
+        value: https://routeloop-ten.vercel.app
