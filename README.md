@@ -16,7 +16,9 @@ Client → Go Gateway → OpenAI / Anthropic / Gemini / Mock
 
 ## Live demo
 
-The public dashboard is read-only. It polls redacted gateway traces when Render is available and falls back to a deterministic seed dataset. The gateway itself sends real requests when provider keys are supplied and falls back to a reproducible mock provider for zero-cost development and failure injection.
+Dashboard: **https://routeloop-ten.vercel.app**
+
+The public traffic-control dashboard is read-only. It polls redacted gateway traces when Render is available and falls back to a deterministic seed dataset. The gateway sends real requests when provider keys are supplied and falls back to a reproducible mock provider for zero-cost development and failure injection. Every surface labels its provenance as **LIVE**, **SIMULATED**, or **PLANNED**.
 
 ## Run locally
 
@@ -38,6 +40,12 @@ Frontend: `http://localhost:3000` · Gateway: `http://localhost:8080` · Evaluat
 - In-memory trace capture and normalized cost estimates
 - Versioned deterministic evaluation endpoint
 - Public responsive dashboard
+- Live routing topology and redacted request explorer
+- Trace timeline with detail inspection
+- Provider inventory and operational health views
+- Interactive deterministic evaluation lab
+- Cost-quality scenario frontier with explicit provenance
+- Architecture and delivery-state map
 - Render blueprints and Vercel configuration
 - Local Redis, PostgreSQL, Redpanda, and ClickHouse via Docker Compose
 
