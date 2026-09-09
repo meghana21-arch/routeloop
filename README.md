@@ -1,84 +1,216 @@
-# RouteLoop
+<div align="center">
+  <img src="public/routeloop-mark.svg" width="88" alt="RouteLoop logo" />
+  <h1>RouteLoop</h1>
+  <p><strong>Control every LLM request. Prove every routing decision.</strong></p>
+  <p>An OpenAI-compatible LLM gateway connecting real request routing to durable traces, cost accounting, deterministic evaluations, and operational decision support.</p>
+  <p><a href="https://routeloop-ten.vercel.app/"><strong>Live dashboard</strong></a> · <a href="#architecture">Architecture</a> · <a href="#quick-start">Quick start</a> · <a href="#api">API</a></p>
 
-> Evaluation-driven routing for production LLM traffic.
+![Next.js](https://img.shields.io/badge/Next.js-16-111111?logo=nextdotjs)
+![Go](https://img.shields.io/badge/Go-gateway-00ADD8?logo=go&logoColor=white)
+![Python](https://img.shields.io/badge/Python-evaluator-3776AB?logo=python&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-durable%20telemetry-4169E1?logo=postgresql&logoColor=white)
+[![Live](https://img.shields.io/badge/demo-live-52D273)](https://routeloop-ten.vercel.app/)
+</div>
 
-RouteLoop is an OpenAI-compatible, multi-provider LLM gateway that connects routing decisions to observed quality, cost, latency, and reliability. It is built as a systems project—not a price-comparison dashboard.
+---
+
+## Why RouteLoop
+
+Calling an LLM API is easy. Operating several providers responsibly is not. Teams need to know which model handled a request, whether it retried, what it cost, how long it took, and whether the response met a measurable quality bar.
+
+RouteLoop puts those concerns on one request path:
+
+```text
+ROUTE → TRACE → EVALUATE → OPTIMIZE → ROUTE
+```
+
+The project is deliberately honest about provenance. Every dashboard surface is labeled **LIVE**, **SIMULATED**, or **PLANNED**, so reproducible demo data is never presented as production evidence.
+
+## Live system
+
+| Surface                   | URL                                                                                          | Access              |
+| ------------------------- | -------------------------------------------------------------------------------------------- | ------------------- |
+| Traffic-control dashboard | [routeloop-ten.vercel.app](https://routeloop-ten.vercel.app/)                                | Public, read-only   |
+| Gateway health            | [routeloop-gateway.onrender.com/healthz](https://routeloop-gateway.onrender.com/healthz)     | Public health check |
+| Evaluator health          | [routeloop-evaluator.onrender.com/healthz](https://routeloop-evaluator.onrender.com/healthz) | Public health check |
+
+> Render free services can cold-start. If the dashboard initially shows deterministic demo data, allow the gateway a few seconds to wake up.
 
 ## Architecture
 
-```text
-Client → Go Gateway → OpenAI / Anthropic / Gemini / Mock
-              │
-              └→ async telemetry → evaluator → cost + quality metrics
-                                         │
-                                         └→ routing recommendation
+```mermaid
+flowchart LR
+    Client[Client / SDK] -->|OpenAI-compatible request| Gateway[Go Gateway]
+    Gateway --> Router{Provider router}
+    Router --> Gemini[Gemini adapter]
+    Router -. configured .-> OpenAI[OpenAI adapter]
+    Router -. configured .-> Anthropic[Anthropic adapter]
+    Router --> Mock[Deterministic mock]
+    Gemini --> Gateway
+    OpenAI --> Gateway
+    Anthropic --> Gateway
+    Mock --> Gateway
+    Gateway -->|redacted trace + cost| Postgres[(Neon PostgreSQL)]
+    Evaluator[Python evaluator] -->|quality result| Postgres
+    Postgres -->|metrics + traces| Dashboard[Next.js dashboard]
+
+    classDef live fill:#102318,stroke:#52d273,color:#edf1f4;
+    classDef ready fill:#101923,stroke:#5aa7ff,color:#edf1f4;
+    classDef simulated fill:#1b1423,stroke:#b88cff,color:#edf1f4;
+    class Gateway,Gemini,Postgres,Evaluator,Dashboard live;
+    class OpenAI,Anthropic ready;
+    class Mock simulated;
 ```
 
-## Live demo
+| Layer          | Technology                     | Responsibility                                              | State           |
+| -------------- | ------------------------------ | ----------------------------------------------------------- | --------------- |
+| Dashboard      | Next.js 16 / React 19 / Vercel | Public operations UI, request explorer, evaluation lab      | Live            |
+| Gateway        | Go / Render                    | Auth, routing, streaming, retries, normalization, telemetry | Live            |
+| Provider       | Google Gemini                  | Current production model traffic                            | Live            |
+| Telemetry      | Neon PostgreSQL                | Durable traces, token usage, cost, evaluation joins         | Live            |
+| Evaluator      | FastAPI / Render               | Versioned deterministic quality checks                      | Live            |
+| Local platform | Redis, Redpanda, ClickHouse    | Future policy distribution and analytical pipeline          | Local / planned |
 
-Dashboard: **https://routeloop-ten.vercel.app**
+## What it demonstrates
 
-The public traffic-control dashboard is read-only. It polls redacted gateway traces when Render is available and falls back to a deterministic seed dataset. The gateway sends real requests when provider keys are supplied and falls back to a reproducible mock provider for zero-cost development and failure injection. Every surface labels its provenance as **LIVE**, **SIMULATED**, or **PLANNED**.
+| Engineering concern        | RouteLoop implementation                                                   |
+| -------------------------- | -------------------------------------------------------------------------- |
+| Stable client contract     | OpenAI-compatible `POST /v1/chat/completions`                              |
+| Multi-provider abstraction | OpenAI, Anthropic, Gemini, and deterministic mock adapters                 |
+| Streaming                  | Server-sent event forwarding                                               |
+| Resilience                 | Bounded retries with exponential backoff                                   |
+| Observability              | Redacted traces, latency, status, tokens, retry count, and normalized cost |
+| Persistence                | Additive, idempotent PostgreSQL migrations with bounded in-memory fallback |
+| Quality                    | Deterministic, versioned evaluator results joined to request traces        |
+| Honest demos               | Explicit live/simulated/planned provenance throughout the UI               |
+| Delivery                   | Vercel frontend plus independently deployed Render services                |
 
-## Run locally
+## Verified production path
+
+The deployed system has completed a real Gemini request, persisted its trace in Neon, calculated token-based cost, and attached a passing evaluator result. This is a connectivity proof, **not a benchmark claim**. Reproducible load-test results will only be published after the benchmark harness is checked in.
+
+## Quick start
+
+### Prerequisites
+
+- Docker with Compose
+- `curl`
+- Optional provider key for real traffic; the mock provider works without one
 
 ```bash
+git clone https://github.com/meghana21-arch/routeloop.git
+cd routeloop
 cp .env.example .env
 docker compose up --build
-make demo
 ```
 
-Frontend: `http://localhost:3000` · Gateway: `http://localhost:8080` · Evaluator: `http://localhost:8000/docs`
+| Service                  | Local URL                    |
+| ------------------------ | ---------------------------- |
+| Dashboard                | `http://localhost:3000`      |
+| Gateway                  | `http://localhost:8080`      |
+| Evaluator / OpenAPI docs | `http://localhost:8000/docs` |
 
-## MVP capabilities
+Run the deterministic smoke request with `make demo`.
 
-- OpenAI-compatible `POST /v1/chat/completions`
-- OpenAI, Anthropic, Gemini, and deterministic mock adapters
-- Server-sent event streaming
-- Bounded retries with exponential backoff
-- Request-level workload metadata
-- In-memory trace capture and normalized cost estimates
-- Versioned deterministic evaluation endpoint
-- Public responsive dashboard
-- Live routing topology and redacted request explorer
-- Trace timeline with detail inspection
-- Provider inventory and operational health views
-- Interactive deterministic evaluation lab
-- Cost-quality scenario frontier with explicit provenance
-- Architecture and delivery-state map
-- Render blueprints and Vercel configuration
-- Local Redis, PostgreSQL, Redpanda, and ClickHouse via Docker Compose
+## API
 
-## API example
+### Chat completions
 
 ```bash
 curl -N http://localhost:8080/v1/chat/completions \
   -H 'content-type: application/json' \
   -H 'authorization: Bearer replace-with-a-long-random-secret' \
   -H 'X-RouteLoop-Workload: customer_support' \
-  -d '{"model":"routeloop/auto","stream":true,"messages":[{"role":"user","content":"How can I reset my password?"}]}'
+  -d '{
+    "model": "routeloop/auto",
+    "stream": true,
+    "messages": [{"role": "user", "content": "Explain RouteLoop in one sentence."}]
+  }'
 ```
 
-## Deployment
+### Operational endpoints
 
-Deploy the repository root to Vercel for the dashboard. Create the two Render services from `render.yaml`. Set `WEB_ORIGIN` to the Vercel URL, keep the generated `ROUTELOOP_API_KEY` secret, and add only the provider keys you intend to use. The browser receives only redacted trace metadata; it never receives either API key. Never commit `.env`.
+| Method | Endpoint                 | Purpose                    | Authentication                |
+| ------ | ------------------------ | -------------------------- | ----------------------------- |
+| `GET`  | `/healthz`               | Service health             | Public                        |
+| `POST` | `/v1/chat/completions`   | Route a completion request | Bearer token when configured  |
+| `GET`  | `/v1/traces`             | Query redacted traces      | Public read-only              |
+| `GET`  | `/v1/metrics`            | Aggregate routing metrics  | Public read-only              |
+| `POST` | evaluator `/v1/evaluate` | Run deterministic checks   | Evaluator key for persistence |
 
-### Durable telemetry
+Trace queries support `limit`, `offset`, `provider`, `status`, and `search`.
 
-Set the same PostgreSQL `DATABASE_URL` on both Render services. The gateway runs additive, idempotent migrations at startup and falls back to bounded in-memory storage if PostgreSQL is unavailable. The evaluator persists a result only when a request ID and the private `X-RouteLoop-Evaluator-Key` are supplied.
+## Configuration
 
-For a long-lived free portfolio deployment, Neon is preferable to Render Free Postgres: Render's free database expires after 30 days. Create a Neon project, copy its pooled connection string, and set it as `DATABASE_URL` on `routeloop-gateway` and `routeloop-evaluator`. No database credential belongs in Vercel or browser code.
+| Variable            | Used by             | Purpose                                    |
+| ------------------- | ------------------- | ------------------------------------------ |
+| `DEFAULT_PROVIDER`  | Gateway             | `mock`, `gemini`, `openai`, or `anthropic` |
+| `ROUTELOOP_API_KEY` | Gateway             | Protects completion requests               |
+| `EVALUATOR_API_KEY` | Evaluator           | Authorizes evaluation persistence          |
+| `DATABASE_URL`      | Gateway + evaluator | Shared PostgreSQL connection               |
+| `WEB_ORIGIN`        | Gateway + evaluator | CORS allowlist for the dashboard           |
+| `GEMINI_API_KEY`    | Gateway             | Enables Gemini traffic                     |
+| `OPENAI_API_KEY`    | Gateway             | Enables OpenAI traffic                     |
+| `ANTHROPIC_API_KEY` | Gateway             | Enables Anthropic traffic                  |
 
-Trace queries support `limit`, `offset`, `provider`, `status`, and `search`. Aggregates are available at `GET /v1/metrics`.
+Never place provider keys, gateway keys, evaluator keys, or database credentials in Vercel or browser-exposed variables.
 
-## Engineering roadmap
+## Repository map
 
-1. Persist immutable routing policies in PostgreSQL and distribute them through Redis.
-2. Move trace delivery to Redpanda and analytical queries to ClickHouse.
-3. Add circuit breakers, rate limiting, and provider concurrency budgets.
-4. Add shadow traffic, replay, canary promotion, hysteresis, and automatic rollback.
-5. Publish reproducible k6 benchmarks; replace all dashboard benchmark labels only with measured results.
+```text
+routeloop/
+├── app/                         # Next.js traffic-control dashboard
+├── gateway/cmd/server/          # Go gateway, providers, retry/streaming logic
+│   └── migrations/              # Additive PostgreSQL migrations
+├── evaluator/app/               # FastAPI deterministic evaluator
+├── public/                      # RouteLoop brand assets
+├── docker-compose.yml           # Full local platform
+├── render.yaml                  # Render gateway + evaluator blueprint
+└── vercel.json                  # Frontend deployment configuration
+```
 
-## Current benchmark status
+## Development
 
-Benchmark harness is the next milestone. Dashboard values are explicitly demo data until reproducible measurements are checked in.
+```bash
+npm install
+npm run dev       # dashboard
+npm run build     # production build
+npm run lint      # frontend lint
+make test         # gateway tests + Compose validation
+```
+
+## Design decisions
+
+- **Gateway in Go:** small runtime footprint and straightforward streaming/concurrency primitives.
+- **Evaluator as a separate Python service:** keeps evaluation workflows independent from the latency-sensitive request path.
+- **OpenAI-compatible boundary:** clients integrate once while provider adapters remain replaceable.
+- **PostgreSQL before an event stack:** the MVP gets durable, queryable evidence without pretending Redpanda and ClickHouse are already production dependencies.
+- **Deterministic demo mode:** the portfolio remains inspectable without spending provider credits or inventing benchmark results.
+- **Redacted public telemetry:** recruiters can inspect the system without exposing prompts, completions, or credentials.
+
+## Roadmap
+
+- [x] Real provider routing, streaming, and retries
+- [x] Durable PostgreSQL traces and cost accounting
+- [x] Deterministic evaluations attached to traces
+- [x] Public read-only operations dashboard
+- [ ] Immutable, versioned routing policies
+- [ ] Circuit breakers, concurrency budgets, and rate limiting
+- [ ] Shadow traffic, replay, canary promotion, and automatic rollback
+- [ ] Redpanda event delivery and ClickHouse analytical storage
+- [ ] Reproducible k6 benchmark suite and published methodology
+
+## Security and data handling
+
+- The browser receives redacted metadata, not provider credentials.
+- Public traces exclude prompt and completion bodies.
+- Secrets are supplied through deployment environment variables and must never be committed.
+- Admin operations are intentionally outside the public dashboard surface.
+
+## Contributing
+
+Issues and focused pull requests are welcome. Before opening a PR, run `npm run build`, `npm run lint`, and `make test`. Keep claims tied to reproducible evidence and preserve the live/simulated/planned provenance labels.
+
+## License
+
+No open-source license has been selected yet. The source is publicly viewable, but reuse rights are not granted until a license is added.
