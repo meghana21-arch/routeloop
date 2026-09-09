@@ -45,14 +45,20 @@ type ChatResponse struct {
 	Usage             Usage
 }
 type Trace struct {
-	RequestID string    `json:"request_id"`
-	Provider  string    `json:"provider"`
-	Model     string    `json:"model"`
-	Workload  string    `json:"workload"`
-	LatencyMS int64     `json:"latency_ms"`
-	CostUSD   float64   `json:"cost_usd"`
-	Status    string    `json:"status"`
-	CreatedAt time.Time `json:"created_at"`
+	RequestID        string    `json:"request_id"`
+	Provider         string    `json:"provider"`
+	Model            string    `json:"model"`
+	Workload         string    `json:"workload"`
+	LatencyMS        int64     `json:"latency_ms"`
+	CostUSD          float64   `json:"cost_usd"`
+	Status           string    `json:"status"`
+	CreatedAt        time.Time `json:"created_at"`
+	PromptTokens     int       `json:"prompt_tokens"`
+	CompletionTokens int       `json:"completion_tokens"`
+	TotalTokens      int       `json:"total_tokens"`
+	RetryCount       int       `json:"retry_count"`
+	HTTPStatus       int       `json:"http_status"`
+	RoutingReason    string    `json:"routing_reason"`
 }
 type Provider interface {
 	Name() string
@@ -199,7 +205,9 @@ func chat(w http.ResponseWriter, r *http.Request) {
 	var text string
 	var usage Usage
 	var err error
+	attempts := 0
 	for attempt := 0; attempt < 3; attempt++ {
+		attempts++
 		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 		text, usage, err = p.Chat(ctx, req)
 		cancel()
@@ -209,8 +217,10 @@ func chat(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(time.Duration(100*(1<<attempt)) * time.Millisecond)
 	}
 	status := "completed"
+	httpStatus := http.StatusOK
 	if err != nil {
 		status = "failed"
+		httpStatus = http.StatusBadGateway
 		http.Error(w, err.Error(), 502)
 	} else if req.Stream {
 		stream(w, id, p.Name(), text)
@@ -221,8 +231,24 @@ func chat(w http.ResponseWriter, r *http.Request) {
 	if workload == "" {
 		workload = r.Header.Get("X-RouteLoop-Workload")
 	}
-	t := Trace{id, p.Name(), p.Name(), workload, time.Since(start).Milliseconds(), estimate(p.Name(), usage), status, time.Now()}
+	routingReason := "requested-provider"
+	if req.Model == "" || req.Model == "routeloop/auto" {
+		routingReason = "default-provider"
+	}
+	t := Trace{RequestID: id, Provider: p.Name(), Model: providerModel(p.Name()), Workload: workload, LatencyMS: time.Since(start).Milliseconds(), CostUSD: estimate(p.Name(), usage), Status: status, CreatedAt: time.Now(), PromptTokens: usage.PromptTokens, CompletionTokens: usage.CompletionTokens, TotalTokens: usage.TotalTokens, RetryCount: attempts - 1, HTTPStatus: httpStatus, RoutingReason: routingReason}
 	recordTrace(t)
+}
+func providerModel(provider string) string {
+	switch provider {
+	case "openai":
+		return env("OPENAI_MODEL", "gpt-4o-mini")
+	case "anthropic":
+		return env("ANTHROPIC_MODEL", "claude-3-5-haiku-latest")
+	case "gemini":
+		return env("GEMINI_MODEL", "gemini-3.6-flash")
+	default:
+		return "deterministic-v1"
+	}
 }
 func choose(r ChatRequest) Provider {
 	requested := strings.TrimPrefix(r.Model, "routeloop/")
