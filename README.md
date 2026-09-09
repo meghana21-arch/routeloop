@@ -16,7 +16,7 @@ Client → Go Gateway → OpenAI / Anthropic / Gemini / Mock
 
 ## Live demo
 
-The public dashboard is read-only and uses a deterministic seed dataset. The gateway itself sends real requests when provider keys are supplied and falls back to a reproducible mock provider for zero-cost development and failure injection.
+The public dashboard is read-only. It polls redacted gateway traces when Render is available and falls back to a deterministic seed dataset. The gateway itself sends real requests when provider keys are supplied and falls back to a reproducible mock provider for zero-cost development and failure injection.
 
 ## Run locally
 
@@ -46,13 +46,14 @@ Frontend: `http://localhost:3000` · Gateway: `http://localhost:8080` · Evaluat
 ```bash
 curl -N http://localhost:8080/v1/chat/completions \
   -H 'content-type: application/json' \
+  -H 'authorization: Bearer replace-with-a-long-random-secret' \
   -H 'X-RouteLoop-Workload: customer_support' \
   -d '{"model":"routeloop/auto","stream":true,"messages":[{"role":"user","content":"How can I reset my password?"}]}'
 ```
 
 ## Deployment
 
-Deploy the repository root to Vercel for the dashboard. Create the two Render services from `render.yaml`. Set `WEB_ORIGIN` to the Vercel URL and add only the provider keys you intend to use. Never commit `.env`.
+Deploy the repository root to Vercel for the dashboard. Create the two Render services from `render.yaml`. Set `WEB_ORIGIN` to the Vercel URL, keep the generated `ROUTELOOP_API_KEY` secret, and add only the provider keys you intend to use. The browser receives only redacted trace metadata; it never receives either API key. Never commit `.env`.
 
 ## Engineering roadmap
 

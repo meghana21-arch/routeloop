@@ -8,9 +8,11 @@ services:
     healthCheckPath: /healthz
     envVars:
       - key: DEFAULT_PROVIDER
-        value: mock
+        value: gemini
       - key: WEB_ORIGIN
         sync: false
+      - key: ROUTELOOP_API_KEY
+        generateValue: true
   - type: web
     name: routeloop-evaluator
     runtime: docker
