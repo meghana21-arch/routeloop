@@ -13,6 +13,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -59,6 +60,8 @@ type Trace struct {
 	RetryCount       int       `json:"retry_count"`
 	HTTPStatus       int       `json:"http_status"`
 	RoutingReason    string    `json:"routing_reason"`
+	EvaluationScore  *float64  `json:"evaluation_score,omitempty"`
+	EvaluationPassed *bool     `json:"evaluation_passed,omitempty"`
 }
 type Provider interface {
 	Name() string
@@ -176,6 +179,7 @@ func main() {
 		writeJSON(w, map[string]any{"status": "ok", "service": "routeloop-gateway", "storage": storageMode})
 	})
 	mux.HandleFunc("GET /v1/traces", getTraces)
+	mux.HandleFunc("GET /v1/metrics", getMetrics)
 	mux.Handle("POST /v1/chat/completions", requireAPIKey(http.HandlerFunc(chat)))
 	port := env("PORT", "8080")
 	log.Printf("RouteLoop gateway listening on :%s with %s storage", port, storageMode)
@@ -308,12 +312,13 @@ func recordTrace(trace Trace) {
 	}
 }
 func getTraces(w http.ResponseWriter, r *http.Request) {
+	query := TraceQuery{Limit: boundedInt(r.URL.Query().Get("limit"), 100, 1, 200), Offset: boundedInt(r.URL.Query().Get("offset"), 0, 0, 10000), Provider: r.URL.Query().Get("provider"), Status: r.URL.Query().Get("status"), Search: r.URL.Query().Get("search")}
 	if database != nil {
 		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 		defer cancel()
-		stored, err := listStoredTraces(ctx, database, 100)
+		stored, total, err := listStoredTraces(ctx, database, query)
 		if err == nil {
-			writeJSON(w, map[string]any{"data": stored, "storage": "postgres"})
+			writeJSON(w, map[string]any{"data": stored, "storage": "postgres", "pagination": map[string]int{"limit": query.Limit, "offset": query.Offset, "total": total}})
 			return
 		}
 		log.Printf("trace query failed; using memory: %v", err)
@@ -321,6 +326,49 @@ func getTraces(w http.ResponseWriter, r *http.Request) {
 	mu.RLock()
 	defer mu.RUnlock()
 	writeJSON(w, map[string]any{"data": traces, "storage": "memory"})
+}
+func getMetrics(w http.ResponseWriter, r *http.Request) {
+	if database != nil {
+		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+		defer cancel()
+		metrics, err := storedMetrics(ctx, database)
+		if err == nil {
+			writeJSON(w, map[string]any{"data": metrics, "storage": "postgres"})
+			return
+		}
+		log.Printf("metrics query failed; using memory: %v", err)
+	}
+	mu.RLock()
+	defer mu.RUnlock()
+	var totalCost float64
+	var totalLatency int64
+	failures := 0
+	for _, trace := range traces {
+		totalCost += trace.CostUSD
+		totalLatency += trace.LatencyMS
+		if trace.Status == "failed" {
+			failures++
+		}
+	}
+	averageLatency, errorRate := float64(0), float64(0)
+	if len(traces) > 0 {
+		averageLatency = float64(totalLatency) / float64(len(traces))
+		errorRate = float64(failures) / float64(len(traces))
+	}
+	writeJSON(w, map[string]any{"data": map[string]any{"requests": len(traces), "total_cost_usd": totalCost, "average_latency_ms": averageLatency, "error_rate": errorRate, "evaluated_quality": nil}, "storage": "memory"})
+}
+func boundedInt(raw string, fallback, minimum, maximum int) int {
+	value, err := strconv.Atoi(raw)
+	if err != nil {
+		return fallback
+	}
+	if value < minimum {
+		return minimum
+	}
+	if value > maximum {
+		return maximum
+	}
+	return value
 }
 func estimate(p string, u Usage) float64 {
 	rate := 0.000001
