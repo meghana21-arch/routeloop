@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Activity, ArrowRight, Check, ChevronDown, CircleDollarSign, FlaskConical, Gauge, GitBranch, LayoutDashboard, Menu, Network, Search, Settings, Sparkles, Workflow, X, Zap } from 'lucide-react';
+import { Activity, AlertTriangle, ArrowRight, Check, CheckCircle2, ChevronDown, CircleDollarSign, ClipboardList, FlaskConical, Gauge, GitBranch, HeartPulse, LayoutDashboard, Menu, Network, Search, Settings, SlidersHorizontal, X, Zap } from 'lucide-react';
 
 const metrics = [
   ['Requests', '48.2K', '+12.4%', 'vs. previous 7 days', Activity],
   ['Estimated spend', '$682.41', '-18.2%', 'quality-adjusted', CircleDollarSign],
-  ['Quality pass rate', '94.6%', '+1.8%', 'across 3 workloads', Sparkles],
+  ['Quality pass rate', '94.6%', '+1.8%', 'across 3 workloads', CheckCircle2],
   ['P95 latency', '1.84s', '-320ms', 'within 2.0s SLO', Gauge],
 ] as const;
 const traffic = [42,47,44,56,53,61,58,68,63,76,72,81,77,91,87,96,92,101,98,111,106,118,113,124];
@@ -36,14 +36,20 @@ export default function Home(){
   const displayedTraces=liveTraces.length?liveTraces.map(t=>[t.request_id,t.workload||'unclassified',t.model,`${t.latency_ms}ms · $${t.cost_usd.toFixed(4)}`,relativeTime(t.created_at),t.status] as const):demoTraces;
   return <main className="shell">
     <aside className={`sidebar ${open?'open':''}`}>
-      <div className="brand"><Logo/>RouteLoop<button onClick={()=>setOpen(false)} aria-label="Close navigation"><X size={18}/></button></div>
-      <nav><label>Workspace</label><a className="active" href="#overview"><LayoutDashboard/>Overview</a><a href="#workloads"><Workflow/>Workloads</a><a href="#models"><Network/>Models</a><a href="#traces"><Activity/>Traces <small>48.2K</small></a><label>Optimize</label><a href="#experiments"><FlaskConical/>Experiments <b/></a><a href="#routing"><GitBranch/>Routing</a><a href="#cost"><CircleDollarSign/>Cost insights</a></nav>
-      <div className="side-foot"><a href="#settings"><Settings/>Settings</a><div><strong><i className={telemetry==='demo'?'offline':''}/>{telemetry==='live'?'Live gateway connected':telemetry==='connecting'?'Connecting to gateway':'Demo fallback active'}</strong><p>{telemetry==='live'?'Redacted telemetry · read only':'Reproducible seed · read only'}</p></div></div>
+      <div className="brand"><Logo/><span>RouteLoop<small>TRAFFIC CONTROL</small></span><button onClick={()=>setOpen(false)} aria-label="Close navigation"><X size={18}/></button></div>
+      <nav>
+        <a className="active" href="#overview"><LayoutDashboard/>Overview</a>
+        <label>Traffic</label><a href="#requests"><ClipboardList/>Requests</a><a href="#traces"><Activity/>Traces <small>{liveTraces.length||'—'}</small></a>
+        <label>Routing</label><a href="#policies"><SlidersHorizontal/>Policies</a><a href="#models"><Network/>Providers</a><a href="#experiments"><FlaskConical/>Experiments <b/></a>
+        <label>Intelligence</label><a href="#evaluations"><CheckCircle2/>Evaluations</a><a href="#cost"><CircleDollarSign/>Cost / Quality</a><a href="#routing"><GitBranch/>Recommendations</a>
+        <label>Operations</label><a href="#provider-health"><HeartPulse/>Provider Health</a><a href="#incidents"><AlertTriangle/>Incidents</a>
+      </nav>
+      <div className="side-foot"><a href="#settings"><Settings/>Settings</a><div className="runtime"><strong><i className={telemetry==='demo'?'offline':''}/>{telemetry==='live'?'Gateway connected':telemetry==='connecting'?'Connecting to gateway':'Demo fallback active'}</strong><p>{telemetry==='live'?'Redacted telemetry · read only':'Reproducible seed · read only'}</p><div className="state-key"><span><i/>LIVE</span><span><i/>SIMULATED</span><span><i/>PLANNED</span></div></div></div>
     </aside>
     <section className="main">
-      <header><button className="hamburger" onClick={()=>setOpen(true)} aria-label="Open navigation"><Menu/></button><span className="environment"><i/>Production demo <ChevronDown/></span><div><button className="search" aria-label="Search"><Search/></button><a href="https://github.com/meghana21-arch" target="_blank">View on GitHub <ArrowRight/></a></div></header>
+      <header><button className="hamburger" onClick={()=>setOpen(true)} aria-label="Open navigation"><Menu/></button><span className="environment"><b>rl / production</b><span className="release-state live">LIVE</span><span>Public · read only</span></span><div><button className="search" aria-label="Search"><Search/><kbd>⌘ K</kbd></button><a href="https://github.com/meghana21-arch/routeloop" target="_blank" rel="noreferrer">GitHub <ArrowRight/></a></div></header>
       <div className="content" id="overview">
-        <section className="heading"><div><small><i/>All systems operational</small><h1>Routing intelligence</h1><p>Live cost, quality, and reliability signals across every model call.</p></div><div className="select"><select value={range} onChange={e=>setRange(e.target.value)}><option>Last 24 hours</option><option>Last 7 days</option><option>Last 30 days</option></select><ChevronDown/></div></section>
+        <section className="heading"><div><small><i/>Adaptive LLM Gateway & Evaluation Platform</small><h1>Traffic control</h1><p>Route requests across providers, trace every call, evaluate output quality, and understand inference economics.</p><div className="product-loop"><span>ROUTE</span><b>→</b><span>TRACE</span><b>→</b><span>EVALUATE</span><b>→</b><span>OPTIMIZE</span><b>→</b><span>ROUTE</span></div></div><div className="select"><select value={range} onChange={e=>setRange(e.target.value)}><option>Last 24 hours</option><option>Last 7 days</option><option>Last 30 days</option></select><ChevronDown/></div></section>
         <section className="metrics">{metrics.map(([label,value,delta,note,Icon])=><article key={label}><div><span>{label}</span><Icon/></div><strong>{value}</strong><p><b>{delta}</b> {note}</p></article>)}</section>
         <section className="hero-grid">
           <article className="panel chart"><div className="panel-head"><div><h2>Request volume</h2><p>Completed requests by routed provider</p></div><div className="legend"><span><i className="lime"/>Claude</span><span><i className="purple"/>Gemini</span><span><i className="blue"/>OpenAI</span></div></div><div className="plot"><div><span>8K</span><span>6K</span><span>4K</span><span>2K</span><span>0</span></div><svg viewBox="0 0 760 220" preserveAspectRatio="none"><defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#c6ff4a" stopOpacity=".25"/><stop offset="1" stopColor="#c6ff4a" stopOpacity="0"/></linearGradient></defs>{[22,72,122,172,218].map(y=><line key={y} x1="0" x2="760" y1={y} y2={y}/>)}<path d={`M ${traffic.map((v,i)=>`${i*33},${210-v*1.48}`).join(' L ')} L 760,220 L 0,220 Z`}/><polyline points={traffic.map((v,i)=>`${i*33},${210-v*1.48}`).join(' ')}/></svg></div><div className="xaxis"><span>Sep 3</span><span>Sep 4</span><span>Sep 5</span><span>Sep 6</span><span>Sep 7</span><span>Sep 8</span><span>Today</span></div></article>
