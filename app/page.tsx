@@ -16,10 +16,12 @@ import {
   HeartPulse,
   LayoutDashboard,
   Menu,
+  Moon,
   Network,
   Search,
   Settings,
   SlidersHorizontal,
+  Sun,
   X,
 } from 'lucide-react';
 
@@ -140,6 +142,7 @@ function Logo() {
 }
 
 export default function Home() {
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [open, setOpen] = useState(false);
   const [range, setRange] = useState('Last 7 days');
   const [requestQuery, setRequestQuery] = useState('');
@@ -163,6 +166,12 @@ export default function Home() {
   );
   const [liveMetrics, setLiveMetrics] = useState<GatewayMetrics | null>(null);
   const [storage, setStorage] = useState<'memory' | 'postgres'>('memory');
+  useEffect(() => {
+    const saved = window.localStorage.getItem('routeloop-theme');
+    const nextTheme = saved === 'dark' ? 'dark' : 'light';
+    document.documentElement.dataset.theme = nextTheme;
+    setTheme(nextTheme);
+  }, []);
   useEffect(() => {
     let active = true;
     const load = async () => {
@@ -367,6 +376,19 @@ export default function Home() {
             <span>Public · read only</span>
           </span>
           <div>
+            <button
+              className="theme-toggle"
+              aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
+              title={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
+              onClick={() => {
+                const nextTheme = theme === 'light' ? 'dark' : 'light';
+                setTheme(nextTheme);
+                document.documentElement.dataset.theme = nextTheme;
+                window.localStorage.setItem('routeloop-theme', nextTheme);
+              }}
+            >
+              {theme === 'light' ? <Moon /> : <Sun />}
+            </button>
             <button
               className="search"
               aria-label="Open command palette"

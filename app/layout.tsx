@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   title: 'RouteLoop — Adaptive LLM Gateway & Evaluation Platform',
   description:
     'Route real LLM traffic, trace every call, evaluate output quality, and optimize the cost-quality frontier.',
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/routeloop-mark.svg',
+  },
   openGraph: {
     title: 'RouteLoop — Adaptive LLM Gateway',
     description: 'Control every LLM request. Prove every routing decision.',
@@ -28,7 +33,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="light">
       <body>{children}</body>
     </html>
   );
