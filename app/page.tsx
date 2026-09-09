@@ -370,11 +370,6 @@ export default function Home() {
           >
             <Menu />
           </button>
-          <span className="environment">
-            <b>rl / production</b>
-            <span className="release-state live">LIVE</span>
-            <span>Public · read only</span>
-          </span>
           <div>
             <button
               className="theme-toggle"
