@@ -370,13 +370,52 @@ export default function Home() {
           </div>
         </header>
         <div className="content" id="overview">
-          <section className="heading">
+          <section className="product-intro" aria-labelledby="product-title">
+            <div className="intro-copy">
+              <small>
+                <i /> ROUTELOOP / PRODUCTION SYSTEM
+              </small>
+              <h1 id="product-title">
+                Control every LLM request.
+                <span> Prove every routing decision.</span>
+              </h1>
+              <p>
+                RouteLoop is an OpenAI-compatible gateway that routes real model
+                traffic, captures durable traces and cost, evaluates output
+                quality, and turns that evidence into safer routing decisions.
+              </p>
+              <div className="intro-actions">
+                <a className="primary-action" href="#control-room">
+                  Explore the live system <ArrowRight />
+                </a>
+                <a className="secondary-action" href="#architecture">
+                  View architecture
+                </a>
+              </div>
+            </div>
+            <div className="intro-system" aria-label="RouteLoop request lifecycle">
+              <div className="intro-proof">
+                <span><b>REAL</b>Gemini routing</span>
+                <span><b>DURABLE</b>Neon traces</span>
+                <span><b>LIVE</b>Quality evals</span>
+              </div>
+              <div className="intro-flow">
+                <span>CLIENT</span><i>→</i><span>GATEWAY</span><i>→</i>
+                <span>MODEL</span><i>→</i><span>EVALUATOR</span>
+              </div>
+              <p>
+                <code>POST /v1/chat/completions</code>
+                <span>OpenAI-compatible API</span>
+              </p>
+            </div>
+          </section>
+          <section className="heading" id="control-room">
             <div>
               <small>
                 <i />
-                Adaptive LLM Gateway & Evaluation Platform
+                LIVE OPERATIONS
               </small>
-              <h1>Traffic control</h1>
+              <h2>Traffic control</h2>
               <p>
                 Route requests across providers, trace every call, evaluate
                 output quality, and understand inference economics.
