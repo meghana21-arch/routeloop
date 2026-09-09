@@ -430,6 +430,41 @@ export default function Home() {
               className="intro-system"
               aria-label="RouteLoop request lifecycle"
             >
+              <div className="hero-arch-title">
+                <span>LIVE ARCHITECTURE</span>
+                <strong>Request → evidence → better decision</strong>
+              </div>
+              <div className="hero-arch-flow">
+                <div>
+                  <small>01 · ENTRY</small>
+                  <strong>Client request</strong>
+                  <code>OpenAI-compatible</code>
+                </div>
+                <i>→</i>
+                <div className="hero-router">
+                  <small>02 · ROUTE</small>
+                  <strong>Go gateway</strong>
+                  <code>policy + retries</code>
+                </div>
+                <i>→</i>
+                <div>
+                  <small>03 · INFER</small>
+                  <strong>Gemini</strong>
+                  <code>real provider API</code>
+                </div>
+                <i>→</i>
+                <div className="hero-evidence">
+                  <small>04 · PROVE</small>
+                  <strong>Trace + evaluate</strong>
+                  <code>Neon + FastAPI</code>
+                </div>
+              </div>
+              <div className="hero-feedback">
+                <span>QUALITY</span>
+                <span>COST</span>
+                <span>LATENCY</span>
+                <b>↻ evidence feeds the next route</b>
+              </div>
               <div className="intro-proof">
                 <span>
                   <b>REAL</b>Gemini routing
@@ -441,200 +476,196 @@ export default function Home() {
                   <b>LIVE</b>Quality evals
                 </span>
               </div>
-              <div className="intro-flow">
-                <span>CLIENT</span>
-                <i>→</i>
-                <span>GATEWAY</span>
-                <i>→</i>
-                <span>MODEL</span>
-                <i>→</i>
-                <span>EVALUATOR</span>
-              </div>
               <p>
                 <code>POST /v1/chat/completions</code>
                 <span>OpenAI-compatible API</span>
               </p>
             </div>
           </section>
-          <section className="heading" id="control-room">
-            <div>
-              <small>
-                <i />
-                LIVE OPERATIONS
-              </small>
-              <h2>Traffic control</h2>
-              <p>
-                Route requests across providers, trace every call, evaluate
-                output quality, and understand inference economics.
-              </p>
-              <div className="product-loop">
-                <span>ROUTE</span>
-                <b>→</b>
-                <span>TRACE</span>
-                <b>→</b>
-                <span>EVALUATE</span>
-                <b>→</b>
-                <span>OPTIMIZE</span>
-                <b>→</b>
-                <span>ROUTE</span>
-              </div>
-            </div>
-            <div className="select">
-              <select value={range} onChange={(e) => setRange(e.target.value)}>
-                <option>Last 24 hours</option>
-                <option>Last 7 days</option>
-                <option>Last 30 days</option>
-              </select>
-              <ChevronDown />
-            </div>
-          </section>
-          <section className="control-room">
-            <div className="topology-head">
+          <section className="chapter chapter-live" id="control-room">
+            <section className="heading">
               <div>
-                <span className="eyebrow">LIVE ROUTING TOPOLOGY</span>
-                <h2>Production request path</h2>
-              </div>
-              <span className="pulse-label">
-                <i />
-                Polling gateway every 15s
-              </span>
-            </div>
-            <div className="topology">
-              <div className="topology-node source">
-                <small>ENTRYPOINT</small>
-                <strong>Incoming traffic</strong>
-                <code>POST /v1/chat/completions</code>
-              </div>
-              <div className="route-line active">
-                <i />
-              </div>
-              <div className="topology-node router">
-                <small>CONTROL PLANE</small>
-                <strong>
-                  <Logo />
-                  RouteLoop Router
-                </strong>
-                <code>policy: default-provider</code>
-              </div>
-              <div className="route-fan">
-                <i />
-                <i />
-                <i />
-              </div>
-              <div className="provider-nodes">
-                <div className="topology-node standby">
-                  <span className="release-state planned">READY</span>
-                  <strong>OpenAI</strong>
-                  <code>adapter configured</code>
-                  <b>0%</b>
-                </div>
-                <div className="topology-node standby">
-                  <span className="release-state planned">READY</span>
-                  <strong>Anthropic</strong>
-                  <code>adapter configured</code>
-                  <b>0%</b>
-                </div>
-                <div className="topology-node production">
-                  <span className="release-state live">LIVE</span>
-                  <strong>Gemini</strong>
-                  <code>gemini-3.6-flash</code>
-                  <b>100%</b>
+                <small>
+                  <i />
+                  LIVE OPERATIONS
+                </small>
+                <h2>Traffic control</h2>
+                <p>
+                  Route requests across providers, trace every call, evaluate
+                  output quality, and understand inference economics.
+                </p>
+                <div className="product-loop">
+                  <span>ROUTE</span>
+                  <b>→</b>
+                  <span>TRACE</span>
+                  <b>→</b>
+                  <span>EVALUATE</span>
+                  <b>→</b>
+                  <span>OPTIMIZE</span>
+                  <b>→</b>
+                  <span>ROUTE</span>
                 </div>
               </div>
-            </div>
-            <div className="signal-strip">
-              <div>
-                <span>Requests observed</span>
-                <strong>{liveMetrics?.requests || '—'}</strong>
-                <small>
-                  {storage === 'postgres' ? 'DURABLE' : 'MEMORY FALLBACK'}
-                </small>
+              <div className="select">
+                <select
+                  value={range}
+                  onChange={(e) => setRange(e.target.value)}
+                >
+                  <option>Last 24 hours</option>
+                  <option>Last 7 days</option>
+                  <option>Last 30 days</option>
+                </select>
+                <ChevronDown />
               </div>
-              <div>
-                <span>Quality</span>
-                <strong>
-                  {liveMetrics?.evaluated_quality != null
-                    ? `${(liveMetrics.evaluated_quality * 100).toFixed(1)}%`
-                    : '—'}
-                </strong>
-                <small>
-                  {liveMetrics?.evaluated_quality != null
-                    ? 'EVALUATED'
-                    : 'NOT YET EVALUATED'}
-                </small>
+            </section>
+            <section className="control-room">
+              <div className="topology-head">
+                <div>
+                  <span className="eyebrow">LIVE ROUTING TOPOLOGY</span>
+                  <h2>Production request path</h2>
+                </div>
+                <span className="pulse-label">
+                  <i />
+                  Polling gateway every 15s
+                </span>
               </div>
-              <div>
-                <span>Total estimated cost</span>
-                <strong>
-                  {liveMetrics?.requests
-                    ? `$${liveMetrics.total_cost_usd.toFixed(4)}`
-                    : '—'}
-                </strong>
-                <small>
-                  {liveMetrics?.requests ? 'TOKEN BASED' : 'NO LIVE SAMPLE'}
-                </small>
+              <div className="topology">
+                <div className="topology-node source">
+                  <small>ENTRYPOINT</small>
+                  <strong>Incoming traffic</strong>
+                  <code>POST /v1/chat/completions</code>
+                </div>
+                <div className="route-line active">
+                  <i />
+                </div>
+                <div className="topology-node router">
+                  <small>CONTROL PLANE</small>
+                  <strong>
+                    <Logo />
+                    RouteLoop Router
+                  </strong>
+                  <code>policy: default-provider</code>
+                </div>
+                <div className="route-fan">
+                  <i />
+                  <i />
+                  <i />
+                </div>
+                <div className="provider-nodes">
+                  <div className="topology-node standby">
+                    <span className="release-state planned">READY</span>
+                    <strong>OpenAI</strong>
+                    <code>adapter configured</code>
+                    <b>0%</b>
+                  </div>
+                  <div className="topology-node standby">
+                    <span className="release-state planned">READY</span>
+                    <strong>Anthropic</strong>
+                    <code>adapter configured</code>
+                    <b>0%</b>
+                  </div>
+                  <div className="topology-node production">
+                    <span className="release-state live">LIVE</span>
+                    <strong>Gemini</strong>
+                    <code>gemini-3.6-flash</code>
+                    <b>100%</b>
+                  </div>
+                </div>
               </div>
-              <div>
-                <span>Average latency</span>
-                <strong>
-                  {liveMetrics?.requests
-                    ? `${Math.round(liveMetrics.average_latency_ms)}ms`
-                    : '—'}
-                </strong>
-                <small>
-                  {liveMetrics?.requests ? 'OBSERVED' : 'NO LIVE SAMPLE'}
-                </small>
+              <div className="signal-strip">
+                <div>
+                  <span>Requests observed</span>
+                  <strong>{liveMetrics?.requests || '—'}</strong>
+                  <small>
+                    {storage === 'postgres' ? 'DURABLE' : 'MEMORY FALLBACK'}
+                  </small>
+                </div>
+                <div>
+                  <span>Quality</span>
+                  <strong>
+                    {liveMetrics?.evaluated_quality != null
+                      ? `${(liveMetrics.evaluated_quality * 100).toFixed(1)}%`
+                      : '—'}
+                  </strong>
+                  <small>
+                    {liveMetrics?.evaluated_quality != null
+                      ? 'EVALUATED'
+                      : 'NOT YET EVALUATED'}
+                  </small>
+                </div>
+                <div>
+                  <span>Total estimated cost</span>
+                  <strong>
+                    {liveMetrics?.requests
+                      ? `$${liveMetrics.total_cost_usd.toFixed(4)}`
+                      : '—'}
+                  </strong>
+                  <small>
+                    {liveMetrics?.requests ? 'TOKEN BASED' : 'NO LIVE SAMPLE'}
+                  </small>
+                </div>
+                <div>
+                  <span>Average latency</span>
+                  <strong>
+                    {liveMetrics?.requests
+                      ? `${Math.round(liveMetrics.average_latency_ms)}ms`
+                      : '—'}
+                  </strong>
+                  <small>
+                    {liveMetrics?.requests ? 'OBSERVED' : 'NO LIVE SAMPLE'}
+                  </small>
+                </div>
+                <div>
+                  <span>Error rate</span>
+                  <strong>
+                    {liveMetrics?.requests
+                      ? `${(liveMetrics.error_rate * 100).toFixed(1)}%`
+                      : '—'}
+                  </strong>
+                  <small>OBSERVED</small>
+                </div>
               </div>
+            </section>
+            <section className="change-feed" id="routing">
               <div>
-                <span>Error rate</span>
-                <strong>
-                  {liveMetrics?.requests
-                    ? `${(liveMetrics.error_rate * 100).toFixed(1)}%`
-                    : '—'}
-                </strong>
-                <small>OBSERVED</small>
+                <span className="release-state simulated">SIMULATED</span>
+                <small>ROUTING RECOMMENDATION · NOT APPLIED</small>
+                <h2>Evaluate shifting classification traffic toward Gemini</h2>
+                <p>
+                  The current gateway routes Gemini in production. Comparative
+                  allocation requires measured OpenAI and Anthropic traffic
+                  before this recommendation can be promoted.
+                </p>
               </div>
-            </div>
-          </section>
-          <section className="change-feed" id="routing">
-            <div>
-              <span className="release-state simulated">SIMULATED</span>
-              <small>ROUTING RECOMMENDATION · NOT APPLIED</small>
-              <h2>Evaluate shifting classification traffic toward Gemini</h2>
-              <p>
-                The current gateway routes Gemini in production. Comparative
-                allocation requires measured OpenAI and Anthropic traffic before
-                this recommendation can be promoted.
-              </p>
-            </div>
-            <div className="allocation">
-              <span>
-                <b>OpenAI</b>
-                <code>50% → 18%</code>
-              </span>
-              <span>
-                <b>Anthropic</b>
-                <code>40% → 57%</code>
-              </span>
-              <span>
-                <b>Gemini</b>
-                <code>10% → 25%</code>
-              </span>
-            </div>
-            <div className="impact">
-              <span>
-                <small>PROJECTED COST</small>
-                <b>↓ 31%</b>
-              </span>
-              <span>
-                <small>QUALITY DELTA</small>
-                <b>−0.3%</b>
-              </span>
-              <span>
-                <small>P95 LATENCY</small>
-                <b>↓ 420ms</b>
-              </span>
-            </div>
+              <div className="allocation">
+                <span>
+                  <b>OpenAI</b>
+                  <code>50% → 18%</code>
+                </span>
+                <span>
+                  <b>Anthropic</b>
+                  <code>40% → 57%</code>
+                </span>
+                <span>
+                  <b>Gemini</b>
+                  <code>10% → 25%</code>
+                </span>
+              </div>
+              <div className="impact">
+                <span>
+                  <small>PROJECTED COST</small>
+                  <b>↓ 31%</b>
+                </span>
+                <span>
+                  <small>QUALITY DELTA</small>
+                  <b>−0.3%</b>
+                </span>
+                <span>
+                  <small>P95 LATENCY</small>
+                  <b>↓ 420ms</b>
+                </span>
+              </div>
+            </section>
           </section>
           <section className="ops-section" id="requests">
             <div className="section-title">
