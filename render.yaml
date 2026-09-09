@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: routeloop-gateway
+    runtime: docker
+    dockerfilePath: ./gateway/Dockerfile
+    dockerContext: ./gateway
+    healthCheckPath: /healthz
+    envVars:
+      - key: DEFAULT_PROVIDER
+        value: mock
+      - key: WEB_ORIGIN
+        sync: false
+  - type: web
+    name: routeloop-evaluator
+    runtime: docker
+    dockerfilePath: ./evaluator/Dockerfile
+    dockerContext: ./evaluator
+    healthCheckPath: /healthz

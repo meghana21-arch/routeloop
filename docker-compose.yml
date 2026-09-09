@@ -1,0 +1,22 @@
+services:
+  gateway:
+    build: ./gateway
+    ports: ["8080:8080"]
+    env_file: [.env]
+  evaluator:
+    build: ./evaluator
+    ports: ["8000:8000"]
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+  postgres:
+    image: postgres:16-alpine
+    environment: { POSTGRES_USER: routeloop, POSTGRES_PASSWORD: routeloop, POSTGRES_DB: routeloop }
+    ports: ["5432:5432"]
+  redpanda:
+    image: redpandadata/redpanda:v24.3.5
+    command: redpanda start --overprovisioned --smp 1 --memory 512M --reserve-memory 0M --node-id 0 --check=false
+    ports: ["9092:9092"]
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.8-alpine
+    ports: ["8123:8123", "9000:9000"]
