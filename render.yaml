@@ -2,6 +2,7 @@ services:
   - type: web
     name: routeloop-gateway
     runtime: docker
+    plan: free
     dockerfilePath: ./gateway/Dockerfile
     dockerContext: ./gateway
     healthCheckPath: /healthz
@@ -13,6 +14,7 @@ services:
   - type: web
     name: routeloop-evaluator
     runtime: docker
+    plan: free
     dockerfilePath: ./evaluator/Dockerfile
     dockerContext: ./evaluator
     healthCheckPath: /healthz
