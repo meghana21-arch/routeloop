@@ -222,12 +222,7 @@ func chat(w http.ResponseWriter, r *http.Request) {
 		workload = r.Header.Get("X-RouteLoop-Workload")
 	}
 	t := Trace{id, p.Name(), p.Name(), workload, time.Since(start).Milliseconds(), estimate(p.Name(), usage), status, time.Now()}
-	mu.Lock()
-	traces = append([]Trace{t}, traces...)
-	if len(traces) > 1000 {
-		traces = traces[:1000]
-	}
-	mu.Unlock()
+	recordTrace(t)
 }
 func choose(r ChatRequest) Provider {
 	requested := strings.TrimPrefix(r.Model, "routeloop/")
@@ -269,10 +264,37 @@ func stream(w http.ResponseWriter, id, model, text string) {
 	s.Flush()
 	f.Flush()
 }
+func recordTrace(trace Trace) {
+	mu.Lock()
+	traces = append([]Trace{trace}, traces...)
+	if len(traces) > 1000 {
+		traces = traces[:1000]
+	}
+	mu.Unlock()
+	if database != nil {
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			if err := saveTrace(ctx, database, trace); err != nil {
+				log.Printf("trace persistence failed: %v", err)
+			}
+		}()
+	}
+}
 func getTraces(w http.ResponseWriter, r *http.Request) {
+	if database != nil {
+		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+		defer cancel()
+		stored, err := listStoredTraces(ctx, database, 100)
+		if err == nil {
+			writeJSON(w, map[string]any{"data": stored, "storage": "postgres"})
+			return
+		}
+		log.Printf("trace query failed; using memory: %v", err)
+	}
 	mu.RLock()
 	defer mu.RUnlock()
-	writeJSON(w, map[string]any{"data": traces})
+	writeJSON(w, map[string]any{"data": traces, "storage": "memory"})
 }
 func estimate(p string, u Usage) float64 {
 	rate := 0.000001
