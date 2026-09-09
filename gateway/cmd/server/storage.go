@@ -48,6 +48,9 @@ var initialSchema string
 //go:embed migrations/002_trace_details.sql
 var traceDetailsSchema string
 
+//go:embed migrations/003_evaluations.sql
+var evaluationsSchema string
+
 func openDatabase() (*sql.DB, string) {
 	url := os.Getenv("DATABASE_URL")
 	if url == "" {
@@ -78,6 +81,11 @@ func openDatabase() (*sql.DB, string) {
 	if _, err := db.ExecContext(ctx, traceDetailsSchema); err != nil {
 		db.Close()
 		log.Printf("database detail migration failed; using memory: %v", err)
+		return nil, "memory"
+	}
+	if _, err := db.ExecContext(ctx, evaluationsSchema); err != nil {
+		db.Close()
+		log.Printf("database evaluation migration failed; using memory: %v", err)
 		return nil, "memory"
 	}
 	return db, "postgres"

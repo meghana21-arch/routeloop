@@ -23,3 +23,5 @@ services:
     envVars:
       - key: WEB_ORIGIN
         value: https://routeloop-ten.vercel.app
+      - key: EVALUATOR_API_KEY
+        generateValue: true
