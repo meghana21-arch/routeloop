@@ -115,10 +115,26 @@ function relativeTime(value: string) {
 
 function Logo() {
   return (
-    <span className="logo">
-      <i />
-      <i />
-      <i />
+    <span className="logo" aria-hidden="true">
+      <svg viewBox="0 0 64 64" fill="none">
+        <path
+          className="logo-route-a"
+          d="M10 18C18 7 31 8 37 18C43 28 51 29 54 18"
+        />
+        <path
+          className="logo-route-b"
+          d="M54 46C46 57 33 56 27 46C21 36 13 35 10 46"
+        />
+        <path
+          className="logo-route-trace"
+          d="M54 18C52 30 43 32 32 32C21 32 12 34 10 46"
+        />
+        <circle className="logo-node-a" cx="10" cy="18" r="5" />
+        <circle className="logo-node-a" cx="54" cy="18" r="5" />
+        <circle className="logo-node-b" cx="10" cy="46" r="5" />
+        <circle className="logo-node-b" cx="54" cy="46" r="5" />
+        <circle className="logo-core" cx="32" cy="32" r="4" />
+      </svg>
     </span>
   );
 }
@@ -393,15 +409,29 @@ export default function Home() {
                 </a>
               </div>
             </div>
-            <div className="intro-system" aria-label="RouteLoop request lifecycle">
+            <div
+              className="intro-system"
+              aria-label="RouteLoop request lifecycle"
+            >
               <div className="intro-proof">
-                <span><b>REAL</b>Gemini routing</span>
-                <span><b>DURABLE</b>Neon traces</span>
-                <span><b>LIVE</b>Quality evals</span>
+                <span>
+                  <b>REAL</b>Gemini routing
+                </span>
+                <span>
+                  <b>DURABLE</b>Neon traces
+                </span>
+                <span>
+                  <b>LIVE</b>Quality evals
+                </span>
               </div>
               <div className="intro-flow">
-                <span>CLIENT</span><i>→</i><span>GATEWAY</span><i>→</i>
-                <span>MODEL</span><i>→</i><span>EVALUATOR</span>
+                <span>CLIENT</span>
+                <i>→</i>
+                <span>GATEWAY</span>
+                <i>→</i>
+                <span>MODEL</span>
+                <i>→</i>
+                <span>EVALUATOR</span>
               </div>
               <p>
                 <code>POST /v1/chat/completions</code>
@@ -745,7 +775,11 @@ export default function Home() {
                     ? `$${liveTraces.reduce((n, t) => n + t.cost_usd, 0).toFixed(4)}`
                     : '—'}
                 </code>
-                <span className={liveMetrics?.evaluated_quality != null ? 'eval-pass' : ''}>
+                <span
+                  className={
+                    liveMetrics?.evaluated_quality != null ? 'eval-pass' : ''
+                  }
+                >
                   {liveMetrics?.evaluated_quality != null
                     ? `${(liveMetrics.evaluated_quality * 100).toFixed(1)}%`
                     : 'Not evaluated'}
@@ -1064,7 +1098,9 @@ export default function Home() {
                       : 'release-state planned'
                   }
                 >
-                  {liveMetrics?.evaluated_quality != null ? 'LIVE SAMPLE' : 'JOIN PIPELINE PLANNED'}
+                  {liveMetrics?.evaluated_quality != null
+                    ? 'LIVE SAMPLE'
+                    : 'JOIN PIPELINE PLANNED'}
                 </span>
               </aside>
             </div>
