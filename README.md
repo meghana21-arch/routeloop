@@ -63,6 +63,14 @@ curl -N http://localhost:8080/v1/chat/completions \
 
 Deploy the repository root to Vercel for the dashboard. Create the two Render services from `render.yaml`. Set `WEB_ORIGIN` to the Vercel URL, keep the generated `ROUTELOOP_API_KEY` secret, and add only the provider keys you intend to use. The browser receives only redacted trace metadata; it never receives either API key. Never commit `.env`.
 
+### Durable telemetry
+
+Set the same PostgreSQL `DATABASE_URL` on both Render services. The gateway runs additive, idempotent migrations at startup and falls back to bounded in-memory storage if PostgreSQL is unavailable. The evaluator persists a result only when a request ID and the private `X-RouteLoop-Evaluator-Key` are supplied.
+
+For a long-lived free portfolio deployment, Neon is preferable to Render Free Postgres: Render's free database expires after 30 days. Create a Neon project, copy its pooled connection string, and set it as `DATABASE_URL` on `routeloop-gateway` and `routeloop-evaluator`. No database credential belongs in Vercel or browser code.
+
+Trace queries support `limit`, `offset`, `provider`, `status`, and `search`. Aggregates are available at `GET /v1/metrics`.
+
 ## Engineering roadmap
 
 1. Persist immutable routing policies in PostgreSQL and distribute them through Redis.

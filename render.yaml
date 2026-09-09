@@ -13,6 +13,8 @@ services:
         sync: false
       - key: ROUTELOOP_API_KEY
         generateValue: true
+      - key: DATABASE_URL
+        sync: false
   - type: web
     name: routeloop-evaluator
     runtime: docker
@@ -25,3 +27,5 @@ services:
         value: https://routeloop-ten.vercel.app
       - key: EVALUATOR_API_KEY
         generateValue: true
+      - key: DATABASE_URL
+        sync: false
